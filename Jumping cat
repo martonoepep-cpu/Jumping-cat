@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+
+body{
+margin:0;
+overflow:hidden;
+background:linear-gradient(#6ec6ff,#e3f6ff);
+font-family:sans-serif;
+}
+
+#menu{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:#6ec6ff;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+z-index:100;
+}
+
+#menu h1{
+color:white;
+font-size:40px;
+margin-bottom:20px;
+}
+
+#menu button{
+font-size:24px;
+padding:15px 40px;
+border:none;
+border-radius:12px;
+background:#ff8c00;
+color:white;
+}
+
+#cat{
+position:absolute;
+font-size:42px;
+z-index:10;
+}
+
+.platform{
+position:absolute;
+height:18px;
+background:#ff8c00;
+border-radius:10px;
+}
+
+.coin{position:absolute;font-size:20px;}
+.star{position:absolute;font-size:22px;}
+.dog{position:absolute;font-size:24px;}
+
+</style>
+</head>
+
+<body>
+
+<div id="menu">
+<h1>Jumping Cat</h1>
+<button onclick="startGame()">PLAY</button>
+</div>
+
+<div id="cat">🐱</div>
+
+<script>
+
+let cat=document.getElementById("cat")
+
+let columnWidth=window.innerWidth/5
+let rowHeight=120
+
+let catX
+let catY
+
+let velocity
+let gravity=0.35
+let jumpPower=10
+
+let moveX=0
+
+let platforms=[]
+let coins=[]
+let stars=[]
+let dogs=[]
+
+let targetHeight
+let gameRunning=false
+
+function startGame(){
+
+document.getElementById("menu").style.display="none"
+
+resetGame()
+
+gameRunning=true
+game()
+
+}
+
+function resetGame(){
+
+platforms.forEach(p=>p.remove())
+coins.forEach(c=>c.remove())
+stars.forEach(s=>s.remove())
+dogs.forEach(d=>d.remove())
+
+platforms=[]
+coins=[]
+stars=[]
+dogs=[]
+
+catX=columnWidth*2
+catY=window.innerHeight-120
+
+velocity=0
+targetHeight=window.innerHeight
+
+for(let i=0;i<8;i++){
+spawnRow(window.innerHeight-i*rowHeight)
+}
+
+}
+
+function spawnRow(y){
+
+let count=2+Math.floor(Math.random()*3)
+
+let used=[]
+
+while(used.length<count){
+
+let col=Math.floor(Math.random()*5)
+
+if(!used.includes(col)) used.push(col)
+
+}
+
+used.forEach(i=>{
+
+let p=document.createElement("div")
+p.className="platform"
+
+p.style.width=columnWidth+"px"
+p.style.left=i*columnWidth+"px"
+p.style.top=y+"px"
+
+document.body.appendChild(p)
+platforms.push(p)
+
+let r=Math.random()
+
+if(r<0.45){
+
+let c=document.createElement("div")
+c.className="coin"
+c.innerText="🪙"
+
+c.style.left=i*columnWidth+columnWidth/2-10+"px"
+c.style.top=y-28+"px"
+
+document.body.appendChild(c)
+coins.push(c)
+
+}
+
+else if(r<0.52){
+
+let s=document.createElement("div")
+s.className="star"
+s.innerText="⭐"
+
+s.style.left=i*columnWidth+columnWidth/2-10+"px"
+s.style.top=y-28+"px"
+
+document.body.appendChild(s)
+stars.push(s)
+
+}
+
+else if(r<0.57){
+
+let d=document.createElement("div")
+d.className="dog"
+d.innerText="🐶"
+
+d.style.left=i*columnWidth+columnWidth/2-12+"px"
+d.style.top=y-30+"px"
+
+document.body.appendChild(d)
+dogs.push(d)
+
+}
+
+})
+
+}
+
+function starJump(){
+
+let jump=rowHeight*5
+
+platforms.forEach(p=>p.style.top=p.offsetTop+jump+"px")
+coins.forEach(c=>c.style.top=c.offsetTop+jump+"px")
+stars.forEach(s=>s.style.top=s.offsetTop+jump+"px")
+dogs.forEach(d=>d.style.top=d.offsetTop+jump+"px")
+
+}
+
+function game(){
+
+if(!gameRunning) return
+
+velocity+=gravity
+catY+=velocity
+
+catX+=moveX
+
+if(catX<0)catX=0
+if(catX>window.innerWidth-40)catX=window.innerWidth-40
+
+cat.style.left=catX+"px"
+cat.style.top=catY+"px"
+
+platforms.forEach(p=>{
+
+let px=p.offsetLeft
+let py=p.offsetTop
+let pw=p.offsetWidth
+
+if(
+catX+30>px &&
+catX<px+pw &&
+catY+40>py &&
+catY+40<py+18 &&
+velocity>0
+){
+
+velocity=-jumpPower
+targetHeight=py
+
+}
+
+})
+
+coins.forEach(c=>{
+
+if(
+catX<c.offsetLeft+20 &&
+catX+30>c.offsetLeft &&
+catY<c.offsetTop+20 &&
+catY+30>c.offsetTop
+){
+
+c.remove()
+
+}
+
+})
+
+stars.forEach(s=>{
+
+if(
+catX<s.offsetLeft+20 &&
+catX+30>s.offsetLeft &&
+catY<s.offsetTop+20 &&
+catY+30>s.offsetTop
+){
+
+starJump()
+s.remove()
+
+}
+
+})
+
+dogs.forEach(d=>{
+
+if(
+catX<d.offsetLeft+24 &&
+catX+30>d.offsetLeft &&
+catY<d.offsetTop+24 &&
+catY+30>d.offsetTop
+){
+
+gameOver()
+
+}
+
+})
+
+if(targetHeight < window.innerHeight/2){
+
+let diff=(window.innerHeight/2)-targetHeight
+
+platforms.forEach(p=>p.style.top=p.offsetTop+diff+"px")
+coins.forEach(c=>c.style.top=c.offsetTop+diff+"px")
+stars.forEach(s=>s.style.top=s.offsetTop+diff+"px")
+dogs.forEach(d=>d.style.top=d.offsetTop+diff+"px")
+
+targetHeight+=diff
+
+let removePlatforms=platforms.filter(p=>p.offsetTop>window.innerHeight)
+
+removePlatforms.forEach(p=>{
+p.remove()
+platforms.splice(platforms.indexOf(p),1)
+})
+
+if(removePlatforms.length>0){
+spawnRow(-rowHeight)
+}
+
+}
+
+if(catY>window.innerHeight){
+gameOver()
+}
+
+requestAnimationFrame(game)
+
+}
+
+function gameOver(){
+
+gameRunning=false
+
+document.getElementById("menu").style.display="flex"
+
+}
+
+let startX=0
+
+document.addEventListener("touchstart",e=>{
+startX=e.touches[0].clientX
+})
+
+document.addEventListener("touchmove",e=>{
+moveX=(e.touches[0].clientX-startX)*0.18
+})
+
+document.addEventListener("touchend",()=>{
+moveX=0
+})
+
+</script>
+
+</body>
+</html>
